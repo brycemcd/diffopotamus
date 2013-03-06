@@ -10,20 +10,20 @@ redis
 end
 
 $r = Redis.new(:db =>2)
+$r.flushdb #start from a clean slate. Be careful!
 
-csv_one = CSV.read("/home/brycemcd/Desktop/all_subscribers.csv")
+def add_to_list(list_name, file_name)
+  csv = CSV.read(file_name)
 
-csv_one.each do |entry|
-  $r.hmset entry[0], "id", entry[0], "email", entry[1], "status", entry[2]
-  $r.sadd("list_one", entry[0]) if entry[2] == "Active"
+  csv.each do |entry|
+    $r.hmset entry[0], "id", entry[0], "email", entry[1], "status", entry[2]
+    $r.sadd(list_name, entry[0]) if entry[2] == "Active"
+  end
 end
 
-csv_two = CSV.read("/home/brycemcd/Desktop/daily_event.csv")
 
-csv_two.each do |entry|
-  $r.hmset entry[0], "id", entry[0], "email", entry[1], "status", entry[2]
-  $r.sadd("list_two", entry[0]) if entry[2] == "Active"
-end
+add_to_list "list_one", "/home/brycemcd/Desktop/all_subscribers.csv"
+add_to_list "list_two", "/home/brycemcd/Desktop/daily_event.csv"
 
 $r.sdiffstore "list_diff", "list_one", "list_two"
 
